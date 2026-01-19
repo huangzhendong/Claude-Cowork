@@ -33,7 +33,7 @@ export class MCPManager {
 
   constructor(options: MCPManagerOptions = {}) {
     this.options = {
-      serverPath: 'desktop-commander',
+      serverPath: '/Users/luke/code/I_Work/DesktopCommanderMCP/dist/index.js',
       serverArgs: ['--no-onboarding'],
       enabled: true,
       allowedTools: [], // empty array means all tools allowed
