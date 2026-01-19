@@ -7,7 +7,14 @@
       "Bash(timeout 10 bun run dev:electron:*)",
       "Bash(bun run dev:electron:*)",
       "Bash(node:*)",
-      "Bash(bun:*)"
+      "Bash(bun:*)",
+      "Bash(npm_config_target=40.0.0 npm_config_runtime=electron npm_config_disturl=https://electronjs.org/headers npm rebuild:*)",
+      "Bash(npx electron-rebuild:*)",
+      "Bash(npx electron:*)",
+      "Bash(npm_config_target=40.0.0 npm_config_runtime=electron npm_config_disturl=https://electronjs.org/headers bun add:*)",
+      "Bash(npm_config_target=40.0.0 npm_config_runtime=electron npm_config_disturl=https://electronjs.org/headers node-gyp rebuild:*)",
+      "Bash(npm_config_target=40.0.0 npm_config_runtime=electron npm_config_disturl=https://electronjs.org/headers npx node-gyp rebuild:*)",
+      "Bash(npm_config_target=40.0.0 npm_config_runtime=electron npm_config_disturl=https://electronjs.org/headers npm install:*)"
     ]
   }
 }
