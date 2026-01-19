@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run transpile:electron:*)",
+      "Bash(node test-mcp.js:*)",
+      "Bash(pkill:*)",
+      "Bash(timeout 10 bun run dev:electron:*)",
+      "Bash(bun run dev:electron:*)",
+      "Bash(node:*)",
+      "Bash(bun:*)"
+    ]
+  }
+}

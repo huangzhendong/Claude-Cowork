@@ -1,6 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { ChildProcess, spawn } from "child_process";
 import { join } from "path";
 
 // Simple logger since util.js doesn't export logger
@@ -26,7 +25,7 @@ export interface MCPManagerOptions {
 
 export class MCPManager {
   private client: Client | null = null;
-  private serverProcess: ChildProcess | null = null;
+  private transport: StdioClientTransport | null = null;
   private tools: Map<string, MCPTool> = new Map();
   private isInitialized = false;
   private options: MCPManagerOptions;
@@ -54,24 +53,24 @@ export class MCPManager {
       logger.info('Starting Desktop Commander MCP server...');
 
       // Start the MCP server process
-      this.serverProcess = spawn(
-        this.options.serverPath!,
-        this.options.serverArgs!,
-        {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env, NODE_ENV: 'production' }
-        }
-      );
+      const serverPath = this.options.serverPath;
+      const serverArgs = this.options.serverArgs || [];
 
-      // Handle server process errors
-      this.serverProcess.on('error', (error) => {
-        logger.error(`MCP server process error: ${error.message}`);
-        this.cleanup();
-      });
+      if (!serverPath || typeof serverPath !== 'string') {
+        throw new Error(`Invalid server path: ${serverPath}`);
+      }
 
-      this.serverProcess.on('exit', (code) => {
-        logger.info(`MCP server process exited with code ${code}`);
-        this.cleanup();
+      // Use node to execute the JS file (same approach as test-mcp.js)
+      const command = 'node';
+      const args = [serverPath, ...serverArgs];
+
+      logger.info(`Starting MCP server: ${command} ${args.join(' ')}`);
+
+      // Create transport that will spawn the server process
+      this.transport = new StdioClientTransport({
+        command,
+        args,
+        env: { ...process.env, NODE_ENV: 'production' }
       });
 
       // Setup client
@@ -80,9 +79,8 @@ export class MCPManager {
         { capabilities: {} }
       );
 
-      // Connect to server via stdio
-      const transport = new StdioClientTransport(this.serverProcess as any);
-      await this.client.connect(transport);
+      // Connect to server via stdio (this will start the transport and spawn the process)
+      await this.client.connect(this.transport);
 
       logger.info('MCP client connected successfully');
 
@@ -95,6 +93,9 @@ export class MCPManager {
 
     } catch (error) {
       logger.error(`Failed to initialize MCP integration: ${error}`);
+      if (error instanceof Error && error.stack) {
+        logger.debug(`Error stack: ${error.stack}`);
+      }
       this.cleanup();
       return false;
     }
@@ -190,11 +191,9 @@ export class MCPManager {
       this.client = null;
     }
 
-    if (this.serverProcess) {
-      if (!this.serverProcess.killed) {
-        this.serverProcess.kill('SIGTERM');
-      }
-      this.serverProcess = null;
+    if (this.transport) {
+      this.transport.close().catch(() => {});
+      this.transport = null;
     }
 
     this.tools.clear();
